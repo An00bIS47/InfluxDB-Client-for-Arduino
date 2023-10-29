@@ -445,7 +445,11 @@ bool InfluxDBClient::flushBufferInternal(bool flashOnlyFull) {
     if(rwt > 0) {
         INFLUXDB_CLIENT_DEBUG("[W] Cannot write yet, pause %ds, %ds yet\n", _retryTime, rwt);
         // retry after period didn't run out yet
+#if defined(ESP32) || defined(ESP8266)        
         _connInfo.lastError = FPSTR(TooEarlyMessage);
+#elif defined(ARDUINO_TEENSY41)
+        _connInfo.lastError = TooEarlyMessage;
+#endif
         _connInfo.lastError += String(rwt);
         _connInfo.lastError += "s";
         return false;
@@ -614,8 +618,12 @@ FluxQueryResult InfluxDBClient::query(const String &fluxQuery, QueryParams param
     uint32_t rwt = getRemainingRetryTime();
     if(rwt > 0) {
         INFLUXDB_CLIENT_DEBUG("[W] Cannot query yet, pause %ds, %ds yet\n", _retryTime, rwt);
-        // retry after period didn't run out yet
+        // retry after period didn't run out yet        
+#if defined(ESP32) || defined(ESP8266)        
         String mess = FPSTR(TooEarlyMessage);
+#elif defined(ARDUINO_TEENSY41)
+        String mess = TooEarlyMessage;
+#endif
         mess += String(rwt);
         mess += "s";
         return FluxQueryResult(mess);
@@ -632,9 +640,18 @@ FluxQueryResult InfluxDBClient::query(const String &fluxQuery, QueryParams param
     body = F("{\"type\":\"flux\",\"query\":\"");
     body +=  queryEsc;
     body += "\",";
+
+#if defined(ESP32) || defined(ESP8266)    
     body += FPSTR(QueryDialect);
+#elif defined(ARDUINO_TEENSY41)
+    body += QueryDialect;
+#endif
     if(params.size()) {
+#if defined(ESP32) || defined(ESP8266)        
         body += FPSTR(Params);
+#elif defined(ARDUINO_TEENSY41)
+        body += Params;
+#endif
         body += params.jsonString(0);
         for(int i=1;i<params.size();i++) {
             body +=",";
@@ -648,7 +665,11 @@ FluxQueryResult InfluxDBClient::query(const String &fluxQuery, QueryParams param
     CsvReader *reader = nullptr;
     _retryTime = 0;
     INFLUXDB_CLIENT_DEBUG("[D] Query: %s\n", body.c_str());
+#if defined(ESP32) || defined(ESP8266)       
     if(_service->doPOST(_queryUrl.c_str(), body.c_str(), PSTR("application/json"), 200, [&](HTTPClient *httpClient){
+#elif defined(ARDUINO_TEENSY41)
+    if(_service->doPOST(_queryUrl.c_str(), body.c_str(), PSTR("application/json"), 200, [&](HAPHTTPClient *httpClient){
+#endif
         bool chunked = false;
         if(httpClient->hasHeader(TransferEncoding)) {
             String header = httpClient->header(TransferEncoding);

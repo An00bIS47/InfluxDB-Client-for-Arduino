@@ -25,6 +25,7 @@
  * SOFTWARE.
 */
 #include "CsvReader.h"
+#include <algorithm>
 
 CsvReader::CsvReader(HttpStreamScanner *scanner) {
     _scanner = scanner;

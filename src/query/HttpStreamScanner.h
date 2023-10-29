@@ -31,6 +31,8 @@
 # include <ESP8266HTTPClient.h>
 #elif defined(ESP32)
 # include <HTTPClient.h>
+#elif defined(ARDUINO_TEENSY41)
+#include "HAPHTTPClient.hpp"
 #endif //ESP8266
 
 /** 
@@ -41,14 +43,23 @@
  */ 
 class HttpStreamScanner {
 public:
+
+#if defined(ESP8266) || defined(ESP32)
     HttpStreamScanner(HTTPClient *client, bool chunked);
+#elif defined (ARDUINO_TEENSY41)
+    HttpStreamScanner(HAPHTTPClient *client, bool chunked);
+#endif
     bool next();
     void close();
     const String &getLine() const { return _line; }
     int getError() const { return _error; }
     int getLinesNum() const {return _linesNum; }
 private:
+#if defined(ESP8266) || defined(ESP32)
     HTTPClient *_client;
+#elif defined (ARDUINO_TEENSY41)
+    HAPHTTPClient* _client;
+#endif    
     Stream *_stream = nullptr;
     int _len;
     String _line;

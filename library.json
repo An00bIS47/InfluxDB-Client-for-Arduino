@@ -1,0 +1,20 @@
+{
+    "name": "InfluxDB-Client-for-Arduino",
+    "version": "3.13.1",
+    "keywords": "InfluxDB",
+    "description": "InfluxDB Client for Arduino",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/noidea/noidea.git"
+    },
+    "frameworks": "arduino",
+    "platforms": "teensy",
+    "build": {
+        "libArchive": false,
+		"flags": [
+			"-Isrc/",
+			"-Isrc/util",
+			"-Isrc/debug"
+		]
+    }
+}

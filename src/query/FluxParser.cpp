@@ -26,6 +26,7 @@
 */
 
 #include "FluxParser.h"
+#include <algorithm>
 // Uncomment bellow in case of a problem and rebuild sketch
 //#define INFLUXDB_CLIENT_DEBUG_ENABLE
 #include "util/debug.h"
@@ -122,7 +123,11 @@ readRow:
     bool stat = _data->_reader->next();
     if(!stat) {
         if(_data->_reader->getError()< 0) {
+#if defined(ESP8266) || defined(ESP32)            
             _data->_error = HTTPClient::errorToString(_data->_reader->getError());
+#elif defined(ARDUINO_TEENSY41)
+            _data->_error = HAPHTTPClient::errorToString(_data->_reader->getError());
+#endif            
             INFLUXDB_CLIENT_DEBUG("Error '%s'\n", _data->_error.c_str());
         }
         return false;

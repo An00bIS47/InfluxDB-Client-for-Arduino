@@ -33,6 +33,10 @@
 # include <ESP8266HTTPClient.h>
 #elif defined(ESP32)
 # include <HTTPClient.h>
+#elif defined(ARDUINO_TEENSY41)
+#include <QNEthernet.h>
+using namespace qindesign::network;
+#include "HAPHTTPClient.hpp"
 #else
 # error "This library currently supports only ESP8266 and ESP32."
 #endif
@@ -40,7 +44,12 @@
 
 
 class Test;
+#if defined(ESP8266) || defined(ESP32)
 typedef std::function<bool(HTTPClient *client)> httpResponseCallback;
+#elif defined(ARDUINO_TEENSY41)
+#include <functional>
+typedef std::function<bool(HAPHTTPClient *client)> httpResponseCallback;
+#endif
 extern const char *TransferEncoding;
 
 struct ConnectionInfo {
@@ -72,7 +81,7 @@ struct ConnectionInfo {
  **/
 class HTTPService {
 friend class Test;  
-  private:
+private:
     // Connection info data
     ConnectionInfo *_pConnInfo;    
     // Server API URL
@@ -81,17 +90,24 @@ friend class Test;
     uint32_t _lastRequestTime = 0;
     // HTTP status code of last request to server
     int _lastStatusCode = 0;
+
+#if defined(ESP8266) || defined(ESP32)    
     // Underlying HTTPClient instance 
     HTTPClient *_httpClient = nullptr;
     // Underlying connection object 
     WiFiClient *_wifiClient = nullptr;
+#elif defined(ARDUINO_TEENSY41)
+    HAPHTTPClient *_httpClient = nullptr;
+    EthernetClient *_wifiClient = nullptr;
+#endif
+
 #ifdef  ESP8266
     // Trusted cert chain
     BearSSL::X509List *_cert = nullptr;   
 #endif
     // Store retry timeout suggested by server after last request
     int _lastRetryAfter = 0;     
-   
+
 protected:
     // Sets request params
     bool beforeRequest(const char *url);

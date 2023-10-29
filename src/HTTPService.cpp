@@ -44,16 +44,31 @@ HTTPService::HTTPService(ConnectionInfo *pConnInfo):_pConnInfo(pConnInfo) {
       wifiClientSec->setCACert(pConnInfo->certInfo);
     }
 #endif    
+
+#if defined(ESP32) || defined(ESP8266)
     _wifiClient = wifiClientSec;
+#endif    
   } else {
+#if defined(ESP32) || defined(ESP8266)    
     _wifiClient = new WiFiClient;
+#elif defined(ARDUINO_TEENSY41)
+    _wifiClient = new EthernetClient;
+#endif        
   }
   if(!_httpClient) {
+#if defined(ESP32) || defined(ESP8266)        
     _httpClient = new HTTPClient;
+#elif defined(ARDUINO_TEENSY41)
+    _httpClient = new HAPHTTPClient;
+#endif
   }
   _httpClient->setReuse(_pConnInfo->httpOptions._connectionReuse);
 
+#if defined(ESP32) || defined(ESP8266)
   _httpClient->setUserAgent(FPSTR(UserAgent));
+#elif defined(ARDUINO_TEENSY41)
+  _httpClient->setUserAgent(UserAgent);
+#endif  
 };
 
 HTTPService::~HTTPService() {
@@ -76,11 +91,15 @@ HTTPService::~HTTPService() {
 
 void HTTPService::setHTTPOptions() {
   if(!_httpClient) {
+#if defined(ESP32) || defined(ESP8266)    
     _httpClient = new HTTPClient;
+#elif defined(ARDUINO_TEENSY41)
+    _httpClient = new HAPHTTPClient;
+#endif
   }
   _httpClient->setReuse(_pConnInfo->httpOptions._connectionReuse);
   _httpClient->setTimeout(_pConnInfo->httpOptions._httpReadTimeout);
-#if defined(ESP32) 
+#if defined(ESP32) || defined(ARDUINO_TEENSY41)
   _httpClient->setConnectTimeout(_pConnInfo->httpOptions._httpReadTimeout);
 #endif
 }
@@ -150,7 +169,11 @@ bool HTTPService::doPOST(const char *url, const char *data, const char *contentT
     return false;
   }
   if(contentType) {
+#if defined(ESP32) || defined(ESP8266)    
     _httpClient->addHeader(F("Content-Type"), FPSTR(contentType));
+#elif defined(ARDUINO_TEENSY41)
+    _httpClient->addHeader(F("Content-Type"), contentType);
+#endif
   }
   _lastStatusCode = _httpClient->POST((uint8_t *) data, strlen(data));
   return afterRequest(expectedCode, cb);
@@ -162,7 +185,11 @@ bool HTTPService::doPOST(const char *url, Stream *stream, const char *contentTyp
     return false;
   }
   if(contentType) {
+#if defined(ESP32) || defined(ESP8266)    
     _httpClient->addHeader(F("Content-Type"), FPSTR(contentType));
+#elif defined(ARDUINO_TEENSY41)
+    _httpClient->addHeader(F("Content-Type"), contentType);
+#endif
   }
   _lastStatusCode = _httpClient->sendRequest("POST", stream, stream->available());
   return afterRequest(expectedCode, cb);

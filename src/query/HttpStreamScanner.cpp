@@ -31,7 +31,11 @@
 #include "util/debug.h"
 #include "util/helpers.h"
 
+#if defined(ESP8266) || defined(ESP32)
 HttpStreamScanner::HttpStreamScanner(HTTPClient *client, bool chunked)
+#elif defined(ARDUINO_TEENSY41)
+HttpStreamScanner::HttpStreamScanner(HAPHTTPClient *client, bool chunked)
+#endif
 {
     _client = client;
     _stream = client->getStreamPtr();
